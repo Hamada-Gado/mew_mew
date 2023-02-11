@@ -1,9 +1,10 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:mew_mew/facts.dart' hide BASE_URL;
+import 'package:mew_mew/facts.dart';
 
 import 'package:mew_mew/images.dart';
+import 'package:mew_mew/shared_preferences_manager.dart';
 
 void main() {
   runApp(const MainApp());
@@ -72,8 +73,7 @@ class _HomePageState extends State<HomePage> {
       Expanded(
         flex: 1,
         child: SingleChildScrollView(
-          child: ListFact(
-              fact: json!['text'], verified: json?['status']['verified']),
+          child: ListFact(json: json!),
         ),
       ),
     ];
@@ -104,35 +104,51 @@ class _HomePageState extends State<HomePage> {
 }
 
 class ListFact extends StatelessWidget {
-  final String fact;
-  final bool? verified;
+  final Map<String, dynamic> json;
 
-  const ListFact({required this.fact, required this.verified, super.key});
+  const ListFact({required this.json, super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: ListTile(
-        title: SelectableText(fact),
-        trailing: Container(
-          decoration: BoxDecoration(
-              color: verified == null
-                  ? Colors.black38
+    String fact = json['text'];
+    bool? verified = json['status']['verified'];
+
+    return Dismissible(
+      key: Key(json['_id']),
+      background: Container(color: Colors.red),
+      secondaryBackground: Container(color: Colors.green),
+      confirmDismiss: (direction) async =>
+          direction == DismissDirection.startToEnd ? true : false,
+      onDismissed: (direction) {
+        if (direction == DismissDirection.startToEnd) {
+          savePrefs(Mode.rejected.value, json['_id']);
+        } else {
+          savePrefs(Mode.accepted.value, json['_id']);
+        }
+      },
+      child: Card(
+        child: ListTile(
+          title: SelectableText(fact),
+          trailing: Container(
+            decoration: BoxDecoration(
+                color: verified == null
+                    ? Colors.black38
+                    : verified == false
+                        ? Colors.red
+                        : Colors.green,
+                shape: BoxShape.circle),
+            child: Icon(
+              verified == null
+                  ? Icons.question_mark
                   : verified == false
-                      ? Colors.red
-                      : Colors.green,
-              shape: BoxShape.circle),
-          child: Icon(
-            verified == null
-                ? Icons.question_mark
-                : verified == false
-                    ? Icons.close
-                    : Icons.check,
-            size: 40,
-            color: Colors.white,
+                      ? Icons.close
+                      : Icons.check,
+              size: 40,
+              color: Colors.white,
+            ),
           ),
+          contentPadding: const EdgeInsets.all(8),
         ),
-        contentPadding: const EdgeInsets.all(8),
       ),
     );
   }
