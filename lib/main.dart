@@ -29,16 +29,22 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? json;
   Image? image;
 
-  Future<void> getRandomFactAndImage() async {
+  @override
+  void initState() {
+    super.initState();
+    setRandomImageAndFact();
+  }
+
+  Future<void> setRandomImageAndFact() async {
     setState(() {
       json = image = null;
     });
 
-    Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
     Future<Uint8List> bytesImageFuture = getRandomImage();
+    Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
 
-    Map<String, dynamic> decodedJson = await decodedJsonFuture;
     Uint8List bytesImage = await bytesImageFuture;
+    Map<String, dynamic> decodedJson = await decodedJsonFuture;
 
     setState(() {
       image = Image.memory(
@@ -49,40 +55,46 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
+  List<Widget> imageAndFact() {
+    if (image == null || json == null || json!['text'] == null) {
+      return [
+        const Padding(
+          padding: EdgeInsets.all(8),
+          child: CircularProgressIndicator(),
+        )
+      ];
+    }
+    return [
+      Expanded(
+          flex: 2,
+          child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(), child: image!)),
+      Expanded(
+        flex: 1,
+        child: SingleChildScrollView(
+          child: ListFact(
+              fact: json!['text'], verified: json?['status']['verified']),
+        ),
+      ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('mew mew'),
+        title: const Text(
+          'Mew Mew',
+        ),
+        centerTitle: true,
       ),
       body: Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          image == null
-              ? const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: CircularProgressIndicator(),
-                )
-              : Expanded(
-                  flex: 2,
-                  child: SingleChildScrollView(
-                      physics: const BouncingScrollPhysics(), child: image!)),
-          json == null || json!['text'] == null
-              ? const Padding(
-                  padding: EdgeInsets.all(8),
-                  child: CircularProgressIndicator(),
-                )
-              : Expanded(
-                  flex: 1,
-                  child: SingleChildScrollView(
-                    child: ListFact(
-                        fact: json!['text'],
-                        verified: json?['status']['verified']),
-                  ),
-                ),
+          ...imageAndFact(),
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 15),
             child: ElevatedButton(
-                onPressed: getRandomFactAndImage,
+                onPressed: setRandomImageAndFact,
                 child: const Text("get random mew mew fact")),
           )
         ]),
