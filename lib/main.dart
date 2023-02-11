@@ -29,7 +29,11 @@ class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? json;
   Image? image;
 
-  Future getNewFactAndImage() async {
+  Future<void> getRandomFactAndImage() async {
+    setState(() {
+      json = image = null;
+    });
+
     Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
     Future<Uint8List> bytesImageFuture = getRandomImage();
 
@@ -39,7 +43,7 @@ class _HomePageState extends State<HomePage> {
     setState(() {
       image = Image.memory(
         bytesImage,
-        fit: BoxFit.fill,
+        fit: BoxFit.fitWidth,
       );
       json = decodedJson;
     });
@@ -58,17 +62,29 @@ class _HomePageState extends State<HomePage> {
                   padding: EdgeInsets.all(8),
                   child: CircularProgressIndicator(),
                 )
-              : image!,
+              : Expanded(
+                  flex: 2,
+                  child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(), child: image!)),
           json == null || json!['text'] == null
               ? const Padding(
                   padding: EdgeInsets.all(8),
                   child: CircularProgressIndicator(),
                 )
-              : ListFact(
-                  fact: json!['text'], verified: json?['status']['verified']),
-          ElevatedButton(
-              onPressed: getNewFactAndImage,
-              child: const Text("get new mew mew fact"))
+              : Expanded(
+                  flex: 1,
+                  child: SingleChildScrollView(
+                    child: ListFact(
+                        fact: json!['text'],
+                        verified: json?['status']['verified']),
+                  ),
+                ),
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 15),
+            child: ElevatedButton(
+                onPressed: getRandomFactAndImage,
+                child: const Text("get random mew mew fact")),
+          )
         ]),
       ),
     );
