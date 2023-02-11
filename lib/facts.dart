@@ -20,7 +20,7 @@ import 'package:http/http.dart' as http;
 */
 const String BASE_URL = "cat-fact.herokuapp.com";
 
-Future<Map<String, dynamic>?> getRandomFact() async {
+Future<Map<String, dynamic>> getRandomFact() async {
   Uri url = Uri.https(BASE_URL, "facts/random");
   http.Response response = await http.get(url);
 
@@ -28,6 +28,5 @@ Future<Map<String, dynamic>?> getRandomFact() async {
     return jsonDecode(response.body);
   }
 
-  debugPrint("Error: ${response.statusCode}");
-  return null;
+  throw Exception("Could not get random fact ${response.statusCode}");
 }
