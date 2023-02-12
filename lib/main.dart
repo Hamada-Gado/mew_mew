@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:mew_mew/facts.dart';
 
@@ -56,60 +57,7 @@ class _HomePageState extends State<HomePage> {
     });
   }
 
-  List<Widget> imageAndFact() {
-    if (image == null || json == null || json!['text'] == null) {
-      return [
-        const Padding(
-          padding: EdgeInsets.all(8),
-          child: CircularProgressIndicator(),
-        )
-      ];
-    }
-    return [
-      Expanded(
-          flex: 2,
-          child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(), child: image!)),
-      Expanded(
-        flex: 1,
-        child: SingleChildScrollView(
-          child: ListFact(json: json!),
-        ),
-      ),
-    ];
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Mew Mew',
-        ),
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          ...imageAndFact(),
-          Padding(
-            padding: const EdgeInsets.only(top: 8, bottom: 15),
-            child: ElevatedButton(
-                onPressed: setRandomImageAndFact,
-                child: const Text("get random mew mew fact")),
-          )
-        ]),
-      ),
-    );
-  }
-}
-
-class ListFact extends StatelessWidget {
-  final Map<String, dynamic> json;
-
-  const ListFact({required this.json, super.key});
-
-  @override
-  Widget build(BuildContext context) {
+  Widget listFact(Map<String, dynamic> json) {
     String fact = json['text'];
     bool? verified = json['status']['verified'];
 
@@ -117,13 +65,13 @@ class ListFact extends StatelessWidget {
       key: Key(json['_id']),
       background: Container(color: Colors.red),
       secondaryBackground: Container(color: Colors.green),
-      confirmDismiss: (direction) async =>
-          direction == DismissDirection.startToEnd ? true : false,
       onDismissed: (direction) {
         if (direction == DismissDirection.startToEnd) {
           savePrefs(Mode.rejected.value, json['_id']);
+          setRandomImageAndFact();
         } else {
           savePrefs(Mode.accepted.value, json['_id']);
+          setRandomImageAndFact();
         }
       },
       child: Card(
@@ -149,6 +97,46 @@ class ListFact extends StatelessWidget {
           ),
           contentPadding: const EdgeInsets.all(8),
         ),
+      ),
+    );
+  }
+
+  List<Widget> imageAndFact() {
+    if (image == null || json == null) {
+      return [
+        const Padding(
+          padding: EdgeInsets.all(8),
+          child: CircularProgressIndicator(),
+        )
+      ];
+    }
+    return [
+      Expanded(
+          flex: 2,
+          child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(), child: image!)),
+      Expanded(
+        flex: 1,
+        child: SingleChildScrollView(
+          child: listFact(json!),
+        ),
+      ),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Mew Mew',
+        ),
+        centerTitle: true,
+      ),
+      body: Center(
+        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
+          ...imageAndFact(),
+        ]),
       ),
     );
   }
