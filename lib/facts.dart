@@ -40,3 +40,29 @@ Future<Map<String, dynamic>> getRandomFact() async {
 
   throw Exception("Could not get random fact ${response.statusCode}");
 }
+
+Future<List<String>> getAcceptedFactsFromIds() async {
+  http.Client client = http.Client();
+  List<String> ids = await loadPrefs(Mode.accepted.value);
+
+  List<Future<http.Response>> responseFuture = [];
+  Uri url;
+
+  try {
+    for (int i = 0; i < ids.length; i++) {
+      url = Uri.https(BASE_URL, "facts/${ids[i]}");
+      responseFuture.add(http.get(url));
+    }
+
+    http.Response response;
+
+    for (int i = 0; i < ids.length; i++) {
+      response = await responseFuture[i];
+      ids[i] = jsonDecode(response.body)['text'];
+    }
+
+    return ids;
+  } finally {
+    client.close();
+  }
+}
