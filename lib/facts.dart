@@ -1,6 +1,5 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:mew_mew/shared_preferences_manager.dart';
 
@@ -41,10 +40,11 @@ Future<Map<String, dynamic>> getRandomFact() async {
   throw Exception("Could not get random fact ${response.statusCode}");
 }
 
-Future<List<String>> getAcceptedFactsFromIds() async {
+Future<List<Map<String, dynamic>>> getAcceptedFactsFromIds() async {
   http.Client client = http.Client();
   List<String> ids = await loadPrefs(Mode.accepted.value);
 
+  List<Map<String, dynamic>> results = [];
   List<Future<http.Response>> responseFuture = [];
   Uri url;
 
@@ -58,10 +58,10 @@ Future<List<String>> getAcceptedFactsFromIds() async {
 
     for (int i = 0; i < ids.length; i++) {
       response = await responseFuture[i];
-      ids[i] = jsonDecode(response.body)['text'];
+      results.add(jsonDecode(response.body));
     }
 
-    return ids;
+    return results;
   } finally {
     client.close();
   }

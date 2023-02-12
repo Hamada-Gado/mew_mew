@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mew_mew/facts.dart';
-import 'package:mew_mew/shared_preferences_manager.dart';
+import 'package:mew_mew/list_fact.dart';
 
 class AcceptedList extends StatefulWidget {
   const AcceptedList({super.key});
@@ -10,7 +10,7 @@ class AcceptedList extends StatefulWidget {
 }
 
 class _AcceptedListState extends State<AcceptedList> {
-  List<String>? accepted;
+  List<Map<String, dynamic>>? accepted;
 
   @override
   void initState() {
@@ -35,18 +35,9 @@ class _AcceptedListState extends State<AcceptedList> {
             return const Center(child: CircularProgressIndicator());
           }
           return ListView.builder(
-            itemCount: accepted!.length,
-            itemBuilder: (context, index) => Container(
-                margin: const EdgeInsets.all(2),
-                padding: const EdgeInsets.all(10),
-                decoration: const BoxDecoration(
-                  color: Colors.black38,
-                ),
-                child: SelectableText(
-                  accepted![index],
-                  style: Theme.of(context).textTheme.bodyMedium,
-                )),
-          );
+              itemCount: accepted!.length,
+              itemBuilder: (context, index) =>
+                  ListFact(json: accepted![index]));
         }());
   }
 }

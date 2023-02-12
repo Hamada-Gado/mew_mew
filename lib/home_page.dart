@@ -1,10 +1,13 @@
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 import 'package:mew_mew/images.dart';
 import 'package:mew_mew/facts.dart';
 import 'package:mew_mew/shared_preferences_manager.dart';
+
+import 'list_fact.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,7 +18,7 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? json;
-  Image? image;
+  Uint8List? imageBytes;
 
   @override
   void initState() {
@@ -25,71 +28,26 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> setRandomImageAndFact() async {
     setState(() {
-      json = image = null;
+      json = imageBytes = null;
     });
 
     Future<Uint8List> bytesImageFuture = getRandomImage();
     Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
 
-    Uint8List bytesImage = await bytesImageFuture;
-    Map<String, dynamic> decodedJson = await decodedJsonFuture;
+    imageBytes = await bytesImageFuture;
+    json = await decodedJsonFuture;
 
-    setState(() {
-      image = Image.memory(
-        bytesImage,
-        fit: BoxFit.fitWidth,
-      );
-      json = decodedJson;
-    });
+    setState(() {});
   }
 
-  Widget listFact(Map<String, dynamic> json) {
-    String fact = json['text'];
-    bool? verified = json['status']['verified'];
+  void saveImage() {
+    if (imageBytes == null) return;
 
-    return Dismissible(
-      key: Key(json['_id']),
-      background: Container(color: Colors.red),
-      secondaryBackground: Container(color: Colors.green),
-      onDismissed: (direction) {
-        if (direction == DismissDirection.startToEnd) {
-          savePrefs(Mode.rejected.value, json['_id']);
-          setRandomImageAndFact();
-        } else {
-          savePrefs(Mode.accepted.value, json['_id']);
-          setRandomImageAndFact();
-        }
-      },
-      child: Card(
-        child: ListTile(
-          title: SelectableText(fact,
-              style: Theme.of(context).textTheme.bodyMedium),
-          trailing: Container(
-            decoration: BoxDecoration(
-                color: verified == null
-                    ? Colors.black38
-                    : verified == false
-                        ? Colors.red
-                        : Colors.green,
-                shape: BoxShape.circle),
-            child: Icon(
-              verified == null
-                  ? Icons.question_mark
-                  : verified == false
-                      ? Icons.close
-                      : Icons.check,
-              size: 40,
-              color: Colors.white,
-            ),
-          ),
-          contentPadding: const EdgeInsets.all(8),
-        ),
-      ),
-    );
+    ImageGallerySaver.saveImage(imageBytes!);
   }
 
   List<Widget> imageAndFact() {
-    if (image == null || json == null) {
+    if (imageBytes == null || json == null) {
       return [
         const Padding(
           padding: EdgeInsets.all(8),
@@ -101,12 +59,34 @@ class _HomePageState extends State<HomePage> {
       Expanded(
           flex: 2,
           child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(), child: image!)),
+              physics: const BouncingScrollPhysics(),
+              child: Image.memory(imageBytes!, fit: BoxFit.fitWidth))),
       Expanded(
         flex: 1,
         child: SingleChildScrollView(
-          child: listFact(json!),
+          child: Dismissible(
+              key: Key(json!['_id']),
+              background: Container(color: Colors.red),
+              secondaryBackground: Container(color: Colors.green),
+              onDismissed: (direction) {
+                if (direction == DismissDirection.startToEnd) {
+                  savePrefs(Mode.rejected.value, json!['_id']);
+                  setRandomImageAndFact();
+                } else {
+                  savePrefs(Mode.accepted.value, json!['_id']);
+                  setRandomImageAndFact();
+                }
+              },
+              child: () {
+                print(json);
+                return ListFact(json: json!);
+              }()),
         ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(top: 8, bottom: 15),
+        child: ElevatedButton(
+            onPressed: saveImage, child: const Text("Save Image")),
       ),
     ];
   }
