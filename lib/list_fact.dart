@@ -19,7 +19,7 @@ class ListFact extends StatelessWidget {
         trailing: Container(
           decoration: BoxDecoration(
               color: verified == null
-                  ? Colors.black38
+                  ? Colors.black26
                   : verified == false
                       ? Colors.red
                       : Colors.green,

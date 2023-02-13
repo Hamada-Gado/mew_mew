@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:mew_mew/accepted_facts.dart';
+import 'package:mew_mew/pages/accepted_page.dart';
 
-import 'home_page.dart';
+import 'package:mew_mew/pages/home_page.dart';
 
 void main() {
   runApp(const MainApp());

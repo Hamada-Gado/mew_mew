@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
@@ -26,7 +27,14 @@ const String BASE_URL = "cataas.com";
 
 Future<Uint8List> getRandomImage() async {
   Uri url = Uri.https(BASE_URL, "cat");
-  http.Response response = await http.get(url);
+
+  http.Response response;
+
+  try {
+    response = await http.get(url);
+  } on SocketException {
+    rethrow;
+  }
 
   if (response.statusCode == 200) {
     return response.bodyBytes;

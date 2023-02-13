@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mew_mew/facts.dart';
+import 'package:mew_mew/api_requests/facts.dart';
 import 'package:mew_mew/list_fact.dart';
 
 class AcceptedList extends StatefulWidget {

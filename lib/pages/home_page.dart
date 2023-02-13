@@ -1,13 +1,14 @@
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 
-import 'package:mew_mew/images.dart';
-import 'package:mew_mew/facts.dart';
+import 'package:mew_mew/api_requests/images.dart';
+import 'package:mew_mew/api_requests/facts.dart';
 import 'package:mew_mew/shared_preferences_manager.dart';
 
-import 'list_fact.dart';
+import 'package:mew_mew/list_fact.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,10 +20,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? json;
   Uint8List? imageBytes;
+  late bool socketException;
 
   @override
   void initState() {
     super.initState();
+    socketException = false;
     setRandomImageAndFact();
   }
 
@@ -34,8 +37,12 @@ class _HomePageState extends State<HomePage> {
     Future<Uint8List> bytesImageFuture = getRandomImage();
     Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
 
-    imageBytes = await bytesImageFuture;
-    json = await decodedJsonFuture;
+    try{
+      imageBytes = await bytesImageFuture;
+      json = await decodedJsonFuture;
+    } on SocketException {
+      socketException = true;
+    }
 
     setState(() {});
   }
@@ -44,6 +51,23 @@ class _HomePageState extends State<HomePage> {
     if (imageBytes == null) return;
 
     ImageGallerySaver.saveImage(imageBytes!);
+  }
+
+  List<Widget> onSocketException(BuildContext context) {
+    return [
+      Card(
+        child: Text(
+          "An error ocurred, the reason might be that their is no internet connection. Check your internet connection and try again.",
+          style: Theme.of(context).textTheme.bodyMedium,
+        ),
+      ),
+      ElevatedButton(
+          onPressed: () {
+            socketException = false;
+            setRandomImageAndFact();
+          },
+          child: const Text("Retry"))
+    ];
   }
 
   List<Widget> imageAndFact() {
@@ -78,7 +102,6 @@ class _HomePageState extends State<HomePage> {
                 }
               },
               child: () {
-                print(json);
                 return ListFact(json: json!);
               }()),
         ),
@@ -115,7 +138,12 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
         child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          ...imageAndFact(),
+          ...() {
+            if (socketException) {
+              return onSocketException(context);
+            }
+            return imageAndFact();
+          }()
         ]),
       ),
     );

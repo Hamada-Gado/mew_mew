@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:mew_mew/shared_preferences_manager.dart';
@@ -25,8 +26,14 @@ Future<Map<String, dynamic>> getRandomFact() async {
   Future<http.Response> responseFuture = http.get(url);
   Future<List<String>> rejectedListFuture = loadPrefs(Mode.rejected.value);
 
-  http.Response response = await responseFuture;
   List<String> rejectedList = await rejectedListFuture;
+  http.Response response;
+
+  try {
+    response = await responseFuture;
+  } on SocketException {
+    rethrow;
+  }
 
   if (response.statusCode == 200) {
     Map<String, dynamic> decodedJson = jsonDecode(response.body);
