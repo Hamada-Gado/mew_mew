@@ -9,6 +9,7 @@ import 'package:mew_mew/api_requests/facts.dart';
 import 'package:mew_mew/shared_preferences_manager.dart';
 
 import 'package:mew_mew/list_fact.dart';
+import 'package:mew_mew/test.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -37,7 +38,7 @@ class _HomePageState extends State<HomePage> {
     Future<Uint8List> bytesImageFuture = getRandomImage();
     Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
 
-    try{
+    try {
       imageBytes = await bytesImageFuture;
       json = await decodedJsonFuture;
     } on SocketException {

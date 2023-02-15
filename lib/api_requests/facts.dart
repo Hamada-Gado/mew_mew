@@ -25,8 +25,12 @@ Future<Map<String, dynamic>> getRandomFact() async {
   Uri url = Uri.https(BASE_URL, "facts/random");
   Future<http.Response> responseFuture = http.get(url);
   Future<List<String>> rejectedListFuture = loadPrefs(Mode.rejected.value);
+  Future<List<String>> acceptedListFuture = loadPrefs(Mode.accepted.value);
 
   List<String> rejectedList = await rejectedListFuture;
+  List<String> acceptedList = await acceptedListFuture;
+  List<String> loadedList = rejectedList..addAll(acceptedList);
+
   http.Response response;
 
   try {
@@ -37,7 +41,7 @@ Future<Map<String, dynamic>> getRandomFact() async {
 
   if (response.statusCode == 200) {
     Map<String, dynamic> decodedJson = jsonDecode(response.body);
-    if (rejectedList.every((element) => element != decodedJson['_id'])) {
+    if (loadedList.every((element) => element != decodedJson['_id'])) {
       return decodedJson;
     } else {
       return getRandomFact();
