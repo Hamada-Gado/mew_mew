@@ -122,7 +122,7 @@ class _HomePageState extends State<HomePage> {
               );
             }
             if (snapshot.error is StatusException) {
-              var error = snapshot.error as StatusException;
+              StatusException error = snapshot.error as StatusException;
               return StatusExceptionW(
                 statusCode: error.statusCode,
                 retry: () {
