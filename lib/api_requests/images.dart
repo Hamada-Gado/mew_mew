@@ -2,6 +2,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http/http.dart' as http;
+import 'package:mew_mew/exceptions/status_exception.dart';
 
 /*
 /cat or /c
@@ -40,5 +41,5 @@ Future<Uint8List> getRandomImage() async {
     return response.bodyBytes;
   }
 
-  throw Exception("Could not get random image ${response.statusCode}");
+  throw StatusException(response.statusCode);
 }

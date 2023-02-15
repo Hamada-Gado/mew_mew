@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:mew_mew/exceptions/status_exception.dart';
 import 'package:mew_mew/shared_preferences_manager.dart';
 
 /*
@@ -48,7 +49,7 @@ Future<Map<String, dynamic>> getRandomFact() async {
     }
   }
 
-  throw Exception("Could not get random fact ${response.statusCode}");
+  throw StatusException(response.statusCode);
 }
 
 Future<List<Map<String, dynamic>>> getAcceptedFactsFromIds() async {
@@ -62,7 +63,7 @@ Future<List<Map<String, dynamic>>> getAcceptedFactsFromIds() async {
   try {
     for (int i = 0; i < ids.length; i++) {
       url = Uri.https(BASE_URL, "facts/${ids[i]}");
-      responseFuture.add(http.get(url));
+      responseFuture.add(client.get(url));
     }
 
     http.Response response;

@@ -11,7 +11,7 @@ class ListFact extends StatelessWidget {
     bool? verified = json['status']['verified'];
 
     return Card(
-      color: Colors.black38,
+      color: Colors.black26,
       margin: const EdgeInsets.all(2),
       child: ListTile(
         title:
@@ -19,7 +19,7 @@ class ListFact extends StatelessWidget {
         trailing: Container(
           decoration: BoxDecoration(
               color: verified == null
-                  ? Colors.black26
+                  ? Colors.black38
                   : verified == false
                       ? Colors.red
                       : Colors.green,

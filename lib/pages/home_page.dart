@@ -6,10 +6,13 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 
 import 'package:mew_mew/api_requests/images.dart';
 import 'package:mew_mew/api_requests/facts.dart';
+
+import 'package:mew_mew/exceptions/status_exception.dart';
+import 'package:mew_mew/exceptions/socket_exception.dart';
+
 import 'package:mew_mew/shared_preferences_manager.dart';
 
 import 'package:mew_mew/list_fact.dart';
-import 'package:mew_mew/test.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,13 +24,12 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   Map<String, dynamic>? json;
   Uint8List? imageBytes;
-  late bool socketException;
+  late Future<void> _future;
 
   @override
   void initState() {
     super.initState();
-    socketException = false;
-    setRandomImageAndFact();
+    _future = setRandomImageAndFact();
   }
 
   Future<void> setRandomImageAndFact() async {
@@ -35,17 +37,13 @@ class _HomePageState extends State<HomePage> {
       json = imageBytes = null;
     });
 
-    Future<Uint8List> bytesImageFuture = getRandomImage();
-    Future<Map<String, dynamic>> decodedJsonFuture = getRandomFact();
-
-    try {
-      imageBytes = await bytesImageFuture;
-      json = await decodedJsonFuture;
-    } on SocketException {
-      socketException = true;
-    }
-
-    setState(() {});
+    await Future.wait([getRandomImage(), getRandomFact()])
+        .then((value) {
+          imageBytes = value[0] as Uint8List;
+          json = value[1] as Map<String, dynamic>;
+        })
+        .catchError((e) => throw e, test: (e) => e is SocketException)
+        .catchError((e) => throw e, test: (e) => e is StatusException);
   }
 
   void saveImage() {
@@ -54,33 +52,8 @@ class _HomePageState extends State<HomePage> {
     ImageGallerySaver.saveImage(imageBytes!);
   }
 
-  List<Widget> onSocketException(BuildContext context) {
-    return [
-      Card(
-        child: Text(
-          "An error ocurred, the reason might be that their is no internet connection. Check your internet connection and try again.",
-          style: Theme.of(context).textTheme.bodyMedium,
-        ),
-      ),
-      ElevatedButton(
-          onPressed: () {
-            socketException = false;
-            setRandomImageAndFact();
-          },
-          child: const Text("Retry"))
-    ];
-  }
-
-  List<Widget> imageAndFact() {
-    if (imageBytes == null || json == null) {
-      return [
-        const Padding(
-          padding: EdgeInsets.all(8),
-          child: CircularProgressIndicator(),
-        )
-      ];
-    }
-    return [
+  Widget imageAndFact() {
+    return Column(mainAxisAlignment: MainAxisAlignment.center, children: [
       Expanded(
           flex: 2,
           child: SingleChildScrollView(
@@ -96,10 +69,10 @@ class _HomePageState extends State<HomePage> {
               onDismissed: (direction) {
                 if (direction == DismissDirection.startToEnd) {
                   savePrefs(Mode.rejected.value, json!['_id']);
-                  setRandomImageAndFact();
+                  _future = setRandomImageAndFact();
                 } else {
                   savePrefs(Mode.accepted.value, json!['_id']);
-                  setRandomImageAndFact();
+                  _future = setRandomImageAndFact();
                 }
               },
               child: () {
@@ -112,7 +85,7 @@ class _HomePageState extends State<HomePage> {
         child: ElevatedButton(
             onPressed: saveImage, child: const Text("Save Image")),
       ),
-    ];
+    ]);
   }
 
   @override
@@ -131,21 +104,38 @@ class _HomePageState extends State<HomePage> {
               padding: const EdgeInsets.all(8.0),
               child: ElevatedButton(
                   onPressed: () =>
-                      Navigator.of(context).pushNamed("accepted list"),
-                  child: const Text("Accepted List")),
+                      Navigator.of(context).pushNamed("accepted page"),
+                  child: const Text("Accepted Facts")),
             )
           ],
         ),
       ),
-      body: Center(
-        child: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
-          ...() {
-            if (socketException) {
-              return onSocketException(context);
+      body: FutureBuilder(
+        future: _future,
+        builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            if (snapshot.error is SocketException) {
+              return SocketExceptionW(
+                retry: () {
+                  _future = setRandomImageAndFact();
+                },
+              );
             }
+            if (snapshot.error is StatusException) {
+              var error = snapshot.error as StatusException;
+              return StatusExceptionW(
+                statusCode: error.statusCode,
+                retry: () {
+                  _future = setRandomImageAndFact();
+                },
+              );
+            }
+          }
+          if (snapshot.connectionState == ConnectionState.done) {
             return imageAndFact();
-          }()
-        ]),
+          }
+          return const Center(child: CircularProgressIndicator());
+        },
       ),
     );
   }
