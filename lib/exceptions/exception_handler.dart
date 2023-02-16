@@ -17,8 +17,18 @@ class _ExceptionHandlerWState extends State<ExceptionHandlerW> {
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Card(
-          color: Colors.red,
-          child: SelectableText(widget.message, style: Theme.of(context).textTheme.bodyMedium,)),
+          child: ListTile(
+            title: SelectableText(
+              widget.message,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            trailing: const Icon(
+              Icons.error_outline,
+              size: 40,
+              color: Colors.red,
+            ),
+          ),
+        ),
         ElevatedButton(onPressed: widget.retry, child: const Text("Retry"))
       ],
     );
