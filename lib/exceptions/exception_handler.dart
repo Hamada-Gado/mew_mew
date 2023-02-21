@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 
-abstract class ExceptionHandlerW extends StatefulWidget {
+abstract class ExceptionHandlerW extends StatelessWidget {
   final String message;
   final Function() retry;
   const ExceptionHandlerW(
       {required this.message, required this.retry, super.key});
 
-  @override
-  State<ExceptionHandlerW> createState() => _ExceptionHandlerWState();
-}
-
-class _ExceptionHandlerWState extends State<ExceptionHandlerW> {
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -19,7 +14,7 @@ class _ExceptionHandlerWState extends State<ExceptionHandlerW> {
         Card(
           child: ListTile(
             title: SelectableText(
-              widget.message,
+              message,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
             trailing: const Icon(
@@ -29,7 +24,7 @@ class _ExceptionHandlerWState extends State<ExceptionHandlerW> {
             ),
           ),
         ),
-        ElevatedButton(onPressed: widget.retry, child: const Text("Retry"))
+        ElevatedButton(onPressed: retry, child: const Text("Retry"))
       ],
     );
   }

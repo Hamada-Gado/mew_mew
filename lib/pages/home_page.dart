@@ -14,6 +14,8 @@ import 'package:mew_mew/shared_preferences_manager.dart';
 
 import 'package:mew_mew/list_fact.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart' as connectivity;
+
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -33,17 +35,24 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> setRandomImageAndFact() async {
-    setState(() {
-      json = imageBytes = null;
-    });
+    setState(() {});
 
-    await Future.wait([getRandomImage(), getRandomFact()])
-        .then((value) {
-          imageBytes = value[0] as Uint8List;
-          json = value[1] as Map<String, dynamic>;
-        })
-        .catchError((e) => throw e, test: (e) => e is SocketException)
-        .catchError((e) => throw e, test: (e) => e is StatusException);
+    if (await connectivity.Connectivity().checkConnectivity() ==
+        connectivity.ConnectivityResult.none) {
+      return Future.error(const SocketException("No internet connection"));
+    }
+
+    List value;
+    try {
+      value = await Future.wait([getRandomImage(), getRandomFact()]);
+    } on SocketException catch (e) {
+      return Future.error(e);
+    } on StatusException catch (e) {
+      return Future.error(e);
+    }
+
+    imageBytes = value[0] as Uint8List;
+    json = value[1] as Map<String, dynamic>;
   }
 
   void saveImage() {
@@ -114,15 +123,16 @@ class _HomePageState extends State<HomePage> {
         future: _future,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
-            if (snapshot.error is SocketException) {
+            var error = snapshot.error;
+            if (error is SocketException) {
               return SocketExceptionW(
+                message: error.message,
                 retry: () {
                   _future = setRandomImageAndFact();
                 },
               );
             }
-            if (snapshot.error is StatusException) {
-              StatusException error = snapshot.error as StatusException;
+            if (error is StatusException) {
               return StatusExceptionW(
                 statusCode: error.statusCode,
                 retry: () {

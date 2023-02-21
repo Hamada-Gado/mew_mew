@@ -6,6 +6,8 @@ import 'package:mew_mew/exceptions/socket_exception.dart';
 import 'package:mew_mew/exceptions/status_exception.dart';
 import 'package:mew_mew/list_fact.dart';
 
+import 'package:connectivity_plus/connectivity_plus.dart' as connectivity;
+
 class AcceptedList extends StatefulWidget {
   const AcceptedList({super.key});
 
@@ -25,10 +27,19 @@ class _AcceptedListState extends State<AcceptedList> {
 
   Future<void> getAcceptedList() async {
     setState(() {});
-    await getAcceptedFactsFromIds()
-        .then((value) => accepted = value)
-        .catchError((e) => throw e, test: (e) => e is SocketException)
-        .catchError((e) => throw e, test: (e) => e is StatusException);
+
+    if (await connectivity.Connectivity().checkConnectivity() ==
+        connectivity.ConnectivityResult.none) {
+      return Future.error(const SocketException("No internet connection"));
+    }
+
+    try {
+      accepted = await getAcceptedFactsFromIds();
+    } on SocketException catch (e) {
+      return Future.error(e);
+    } on StatusException catch (e) {
+      return Future.error(e);
+    }
   }
 
   @override
@@ -42,15 +53,16 @@ class _AcceptedListState extends State<AcceptedList> {
           future: _future,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
-              if (snapshot.error is SocketException) {
+              var error = snapshot.error;
+              if (error is SocketException) {
                 return SocketExceptionW(
+                  message: error.message,
                   retry: () {
                     _future = getAcceptedList();
                   },
                 );
               }
-              if (snapshot.error is StatusException) {
-                var error = snapshot.error as StatusException;
+              if (error is StatusException) {
                 return StatusExceptionW(
                   statusCode: error.statusCode,
                   retry: () {
